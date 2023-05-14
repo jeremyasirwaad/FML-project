@@ -283,7 +283,10 @@ def predict_url(url):
     return label_pred[0]
 
 
+urls = ["https://www.google.com", "http://lksdfh.com/images?http://us.onlinecheats.net/login/="]
+
+for url in urls:
+    print(f"The URL {url} is predicted as {predict_url(url)}")
+
 url = input("Enter a URL to predict: ")
-if not url:
-    url = "https://goole.com.xyz"
 print(f"The URL {url} is predicted as {predict_url(url)}")
