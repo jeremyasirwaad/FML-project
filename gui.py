@@ -224,11 +224,20 @@ pd.to_csv('features.csv', index=False)
 le = LabelEncoder()
 pd['label'] = le.fit_transform(pd['label'])
 
-X = pd.drop(['label', 'url'], axis=1)
+feature_columns = ['url_length', 'no_of_digits', 'no_of_parameters', 'has_port', 
+                   'url_path_length', 'is_https', 'no_of_sub_domains', 
+                   'url_entropy', 'no_of_special_chars', 'contains_IP', 
+                   'no_of_subdir', 'url_is_encoded', 'domain_length', 
+                   'no_of_queries', 'avg_token_length', 'token_count', 
+                   'largest_token', 'smallest_token', 'contains_at_symbol', 
+                   'is_shortened', 'count_dots', 'count_delimiters', 
+                   'count_sub_domains', 'is_www', 'count_reserved_chars']
+
+X = pd[feature_columns]
+
 y = pd['label']
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=1)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
 
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
@@ -236,7 +245,6 @@ X_test = scaler.transform(X_test)
 
 knn = KNeighborsClassifier(n_neighbors=3)
 knn.fit(X_train, y_train)
-
 
 def predict_url(url):
     a = LexicalURLFeature(url)
@@ -266,7 +274,6 @@ def predict_url(url):
         a.count_sub_domains(),
         a.is_www(),
         a.count_reserved_chars(),
-        pd['label'][0]
     ]
     features = scaler.transform([features])
 
