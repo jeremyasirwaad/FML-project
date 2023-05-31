@@ -144,7 +144,7 @@ with torch.no_grad():
     pred = model(data.x, data.edge_index).argmax(dim=1)
     correct = pred[data.test_mask] == data.y[data.test_mask]
     accuracy = correct.sum().item() / data.test_mask.sum().item()
-    print('Accuracy: {:.4f}'.format(accuracy))
+    print('Accuracy: {:.2f}'.format(accuracy) * 100)
 
 # # Assuming the user input is stored in a variable called 'user_input'
 # user_input = "https://www.example.com"
