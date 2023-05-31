@@ -2,42 +2,30 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import LabelEncoder
+import numpy as np
 
-# Define the Graph Convolutional Layer
-class GraphConvolutionLayer(nn.Module):
-    def __init__(self, input_dim, output_dim):
-        super(GraphConvolutionLayer, self).__init__()
-        self.linear = nn.Linear(input_dim, output_dim)
-
-    def forward(self, x, adjacency_matrix):
-        x = torch.matmul(adjacency_matrix, x.unsqueeze(-1)).squeeze(-1)
-        x = self.linear(x)
-        return x
-
-# Define the Graph Convolutional Network
-class GCN(nn.Module):
+# Define the Neural Network
+class FFNN(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
-        super(GCN, self).__init__()
-        self.layer1 = GraphConvolutionLayer(input_dim, hidden_dim)
-        self.layer2 = GraphConvolutionLayer(hidden_dim, output_dim)
+        super(FFNN, self).__init__()
+        self.layer1 = nn.Linear(input_dim, hidden_dim)
+        self.layer2 = nn.Linear(hidden_dim, output_dim)
         
-    def forward(self, x, adjacency_matrix):
-        x = torch.relu(self.layer1(x, adjacency_matrix))
-        x = self.layer2(x, adjacency_matrix)
+    def forward(self, x):
+        x = torch.relu(self.layer1(x))
+        x = self.layer2(x)
         return x
 
 # Define the custom dataset
-class GraphDataset(Dataset):
-    def __init__(self, csv_file):
-        self.data = pd.read_csv(csv_file)
+class TabularDataset(Dataset):
+    def __init__(self, csv_file, num_rows=10000):
+        self.data = pd.read_csv(csv_file, nrows=num_rows)
         self.features = self.data.drop(columns=['label'])
-        self.adjacency_matrix = self._calculate_adjacency_matrix()
         self.label_encoder = LabelEncoder()
-        self.labels = self.label_encoder.fit_transform(self.data['label'])  # Encode labels
+        self.labels = self.label_encoder.fit_transform(self.data['label'])
         
     def __len__(self):
         return len(self.data)
@@ -45,20 +33,12 @@ class GraphDataset(Dataset):
     def __getitem__(self, idx):
         x = self.features.iloc[idx].values
         y = self.labels[idx]
-        adj = self.adjacency_matrix[idx]
         x = torch.Tensor(x)
         y = torch.Tensor([y])  # Assuming y is a single value
-        adj = torch.Tensor(adj)
-        return x, y, adj
-    
-    def _calculate_adjacency_matrix(self):
-        num_nodes = len(self.data)
-        adjacency_matrix = np.ones((num_nodes, num_nodes))
-        return adjacency_matrix
-
+        return x, y
 
 # Load the dataset
-dataset = GraphDataset('./j.csv')
+dataset = TabularDataset('features_reduced.csv')
 
 # Split the dataset into training and testing sets
 train_data, test_data = train_test_split(dataset, test_size=0.2, random_state=42)
@@ -70,11 +50,11 @@ test_loader = DataLoader(test_data, batch_size=8, shuffle=False)
 # Check if a GPU is available, otherwise use CPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Initialize the GCN model
+# Initialize the model
 input_dim = dataset.features.shape[1]
 hidden_dim = 64
-output_dim = 2  # Assuming you have two classes: 'benign' and 'malicious'
-model = GCN(input_dim, hidden_dim, output_dim).to(device)
+output_dim = len(np.unique(dataset.labels))  # The number of unique labels in your dataset
+model = FFNN(input_dim, hidden_dim, output_dim).to(device)
 
 # Define the loss function and optimizer
 criterion = nn.CrossEntropyLoss()
@@ -84,11 +64,11 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 num_epochs = 10
 for epoch in range(num_epochs):
     model.train()
-    for batch_idx, (features, labels, adjacency_matrix) in enumerate(train_loader):
-        features, labels, adjacency_matrix = features.to(device), labels.to(device), adjacency_matrix.to(device)
+    for batch_idx, (features, labels) in enumerate(train_loader):
+        features, labels = features.to(device), labels.to(device)
         
         optimizer.zero_grad()
-        output = model(features, adjacency_matrix)
+        output = model(features)
         loss = criterion(output, labels.squeeze().long())
         loss.backward()
         optimizer.step()
@@ -101,9 +81,9 @@ model.eval()
 total_correct = 0
 total_samples = 0
 with torch.no_grad():
-    for features, labels, adjacency_matrix in test_loader:
-        features, labels, adjacency_matrix = features.to(device), labels.to(device), adjacency_matrix.to(device)
-        output = model(features, adjacency_matrix)
+    for features, labels in test_loader:
+        features, labels = features.to(device), labels.to(device)
+        output = model(features)
         _, predicted = torch.max(output, dim=1)
         total_correct += (predicted == labels.squeeze().long()).sum().item()
         total_samples += labels.size(0)
