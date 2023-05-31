@@ -1,6 +1,6 @@
 import math
 import re
-import pandas as pd
+import pandas
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
@@ -9,7 +9,6 @@ from re import compile
 from urllib.parse import urlparse
 from socket import gethostbyname
 from tldextract import extract
-
 
 class LexicalURLFeature:
     def __init__(self, url):
@@ -136,90 +135,7 @@ class LexicalURLFeature:
         reserved_chars = [';', '/', '?', ':', '@', '&', '=', '+', '$', ',']
         return sum([self.url.count(c) for c in reserved_chars])
 
-
-pd = pd.read_csv('urldata -Short.csv')
-
-url_length = []
-no_of_digits = []
-num_of_para = []
-has_port = []
-url_path_length = []
-is_https = []
-no_of_sub_domains = []
-url_entropy = []
-no_of_special_chars = []
-contains_IP = []
-no_of_subdir = []
-url_is_encoded = []
-domain_length = []
-no_of_queries = []
-avg_token_length = []
-token_count = []
-largest_token = []
-smallest_token = []
-contains_at_symbol = []
-is_shortened = []
-count_dots = []
-count_delimiters = []
-count_sub_domains = []
-is_www = []
-count_reserved_chars = []
-
-for index in pd.index:
-    a = LexicalURLFeature(pd['url'][index])
-    url_length.append(a.url_length())
-    no_of_digits.append(a.number_of_digits())
-    num_of_para.append(a.number_of_parameters())
-    has_port.append(int(a.url_has_port_in_string()))
-    url_path_length.append(a.url_path_length())
-    is_https.append(a.is_https())
-    no_of_sub_domains.append(a.no_of_sub_domains())
-    url_entropy.append(a.url_entropy())
-    no_of_special_chars.append(a.no_of_special_chars())
-    contains_IP.append(a.contains_IP())
-    no_of_subdir.append(a.no_of_subdir())
-    url_is_encoded.append(a.url_is_encoded())
-    domain_length.append(a.domain_length())
-    no_of_queries.append(a.no_of_queries())
-    avg_token_length.append(a.avg_token_length())
-    token_count.append(a.token_count())
-    largest_token.append(a.largest_token())
-    smallest_token.append(a.smallest_token())
-    contains_at_symbol.append(a.contains_at_symbol())
-    is_shortened.append(a.is_shortened())
-    count_dots.append(a.count_dots())
-    count_delimiters.append(a.count_delimiters())
-    count_sub_domains.append(a.count_sub_domains())
-    is_www.append(a.is_www())
-    count_reserved_chars.append(a.count_reserved_chars())
-
-pd['url_length'] = url_length
-pd['no_of_digits'] = no_of_digits
-pd['no_of_parameters'] = num_of_para
-pd['has_port'] = has_port
-pd['url_path_length'] = url_path_length
-pd['is_https'] = is_https
-pd['no_of_sub_domains'] = no_of_sub_domains
-pd['url_entropy'] = url_entropy
-pd['no_of_special_chars'] = no_of_special_chars
-pd['contains_IP'] = contains_IP
-pd['no_of_subdir'] = no_of_subdir
-pd['url_is_encoded'] = url_is_encoded
-pd['domain_length'] = domain_length
-pd['no_of_queries'] = no_of_queries
-pd['avg_token_length'] = avg_token_length
-pd['token_count'] = token_count
-pd['largest_token'] = largest_token
-pd['smallest_token'] = smallest_token
-pd['contains_at_symbol'] = contains_at_symbol
-pd['is_shortened'] = is_shortened
-pd['count_dots'] = count_dots
-pd['count_delimiters'] = count_delimiters
-pd['count_sub_domains'] = count_sub_domains
-pd['is_www'] = is_www
-pd['count_reserved_chars'] = count_reserved_chars
-
-pd.to_csv('features.csv', index=False)
+pd = pandas.read_csv("features.csv")
 
 le = LabelEncoder()
 pd['label'] = le.fit_transform(pd['label'])
